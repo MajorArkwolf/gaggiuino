@@ -1,14 +1,13 @@
 #ifndef SENSORS_STATE_H
 #define SENSORS_STATE_H
 
+#include "pressure_state.h"
+
 struct SensorState {
   float temperature;
   float pressure;
   float smoothedPressure;
-  bool isPressureFalling;
-  bool isPressureFallingFast;
-  bool isPressureRising;
-  bool isPressureRisingFast;
+  Gaggiuino::Pressure::State pressureState;
   bool isPumpFlowRisingFast;
   bool isPumpFlowFallingFast;
   bool isSteamForgottenON;
