@@ -14,11 +14,14 @@ namespace Gaggiuino::Pressure::Template {
 
     void init() { m_pressureSensor.init(); }
 
-    float getPressure() {
+    void pollSensor() {
       m_previousPressure = m_currentPressure;
       m_currentPressure = m_pressureSensor.getPressure();
       m_previousSmoothedPressure = m_currentSmoothedPressure;
       m_currentSmoothedPressure = m_smoothPressure.updateEstimate(m_currentPressure);
+    }
+
+    float getPressure() {
       return m_currentPressure;
     }
 

@@ -6,7 +6,7 @@
 #include "lcd/lcd.h"
 #include "peripherals/internal_watchdog.h"
 #include "peripherals/pump.h"
-#include "peripherals/pressure_sensor.h"
+#include "peripherals/pressure-sensor/pressure_sensor_factory.h"
 #include "peripherals/scales.h"
 #include "peripherals/peripherals.h"
 #include "peripherals/thermocouple.h"
@@ -22,9 +22,9 @@
 
 // Define some const values
 #if defined SINGLE_BOARD
-    #define GET_KTYPE_READ_EVERY    70 // thermocouple data read interval not recommended to be changed to lower than 250 (ms)
+#define GET_KTYPE_READ_EVERY    70 // thermocouple data read interval not recommended to be changed to lower than 250 (ms)
 #else
-    #define GET_KTYPE_READ_EVERY    250 // thermocouple data read interval not recommended to be changed to lower than 250 (ms)
+#define GET_KTYPE_READ_EVERY    250 // thermocouple data read interval not recommended to be changed to lower than 250 (ms)
 #endif
 #define GET_PRESSURE_READ_EVERY 10
 #define GET_SCALES_READ_EVERY   100
@@ -40,19 +40,19 @@
 
 
 typedef enum {
-    OPMODE_straight9Bar,
-    OPMODE_justPreinfusion,
-    OPMODE_justPressureProfile,
-    OPMODE_manual,
-    OPMODE_preinfusionAndPressureProfile,
-    OPMODE_flush,
-    OPMODE_descale,
-    OPMODE_empty,
-    OPMODE_justFlowBasedProfiling,
-    OPMODE_steam,
-    OPMODE_justFlowBasedPreinfusion,
-    OPMODE_everythingFlowProfiled,
-    OPMODE_pressureBasedPreinfusionAndFlowProfile
+  OPMODE_straight9Bar,
+  OPMODE_justPreinfusion,
+  OPMODE_justPressureProfile,
+  OPMODE_manual,
+  OPMODE_preinfusionAndPressureProfile,
+  OPMODE_flush,
+  OPMODE_descale,
+  OPMODE_empty,
+  OPMODE_justFlowBasedProfiling,
+  OPMODE_steam,
+  OPMODE_justFlowBasedPreinfusion,
+  OPMODE_everythingFlowProfiled,
+  OPMODE_pressureBasedPreinfusionAndFlowProfile
 } OPERATION_MODES;
 
 
@@ -67,8 +67,8 @@ unsigned long flowTimer;
 unsigned long steamTime;
 
 //scales vars
-float previousWeight  = 0;
-bool tareDone         = false;
+float previousWeight = 0;
+bool tareDone = false;
 
 // brew detection vars
 bool brewActive = false;
@@ -80,7 +80,6 @@ bool preinfusionFinished = false;
 bool homeScreenScalesEnabled = false;
 
 // Other util vars
-float previousSmoothedPressure;
 float previousSmoothedPumpFlow;
 bool startupInitFinished;
 
