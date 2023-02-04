@@ -20,7 +20,7 @@
 #define HX711_dout_2 PB9
 
 #define USART_LCD Serial1  // PA2(TX) & PA3(RX)
-#define USART_ESP Serial12 // PA9(TX) & PA10(RX)
+#define USART_ESP Serial2  // PA9(TX) & PA10(RX)
 #define USART_DEBUG Serial // USB-CDC (Takes PA8,PA9,PA10,PA11)
 
 #define hw_SCL PB6
