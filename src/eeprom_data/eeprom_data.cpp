@@ -1,10 +1,14 @@
+#ifdef ESP_CORE
+#include <EEPROM.h>
+#else
 #define STM32F4 // This define has to be here otherwise the include of FlashStorage_STM32.h bellow fails.
 #include <FlashStorage_STM32.h>
+#endif
 
 #include "eeprom_data/eeprom_data.h"
-#include "eeprom_metadata.h"
-#include "legacy/eeprom_data_v4.h"
-#include "legacy/eeprom_data_v5.h"
+#include "eeprom_data/eeprom_metadata.h"
+#include "eeprom_data/legacy/eeprom_data_v4.h"
+#include "eeprom_data/legacy/eeprom_data_v5.h"
 
 namespace
 {
