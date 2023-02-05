@@ -1,8 +1,7 @@
 #ifndef SENSORS_STATE_H
 #define SENSORS_STATE_H
 
-struct SensorState
-{
+struct SensorState {
   float temperature;
   float pressure;
   bool isPressureFalling;
@@ -22,8 +21,7 @@ struct SensorState
   float smoothedWeightFlow;
 };
 
-struct SensorStateSnapshot
-{
+struct SensorStateSnapshot {
   bool brewActive;
   bool steamActive;
   float temperature;
@@ -33,15 +31,15 @@ struct SensorStateSnapshot
   float weight;
 
   SensorStateSnapshot() = default;
-  SensorStateSnapshot(const SensorState &State, bool BrewActive, bool SteamActive, uint32_t Frequency) : brewActive(BrewActive),
-                                                                                                         steamActive(SteamActive),
-                                                                                                         temperature(State.temperature),
-                                                                                                         pressure(State.smoothedPressure),
-                                                                                                         pumpFlow(State.smoothedPumpFlow),
-                                                                                                         weightFlow(State.weightFlow),
-                                                                                                         weight(State.weight)
-  {
-  }
+  SensorStateSnapshot(const SensorState& State, bool BrewActive,
+                      bool SteamActive, uint32_t Frequency)
+      : brewActive(BrewActive),
+        steamActive(SteamActive),
+        temperature(State.temperature),
+        pressure(State.smoothedPressure),
+        pumpFlow(State.smoothedPumpFlow),
+        weightFlow(State.weightFlow),
+        weight(State.weight) {}
 };
 
 #endif

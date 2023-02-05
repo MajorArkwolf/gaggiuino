@@ -7,7 +7,7 @@
 # extra_scripts = platformio_upload.py
 # upload_protocol = custom
 # custom_upload_url = <your upload URL>
-# 
+#
 # An example of an upload URL:
 # custom_upload_url = http://192.168.1.123/update
 
@@ -32,7 +32,7 @@ def on_upload(source, target, env):
         md5 = hashlib.md5(firmware.read()).hexdigest()
         firmware.seek(0)
         encoder = MultipartEncoder(fields={
-            'MD5': md5, 
+            'MD5': md5,
             'firmware': ('firmware', firmware, 'application/octet-stream')}
         )
 
@@ -49,5 +49,5 @@ def on_upload(source, target, env):
         response = requests.post(upload_url, data=monitor, headers={'Content-Type': monitor.content_type})
         bar.close()
         print(response,response.text)
-            
+
 env.Replace(UPLOADCMD=on_upload)
