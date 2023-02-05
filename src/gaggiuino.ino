@@ -28,6 +28,8 @@ void setup(void)
   LOG_INIT();
   LOG_INFO("Gaggiuino (fw: %s) booting", AUTO_VERSION);
 
+  mcuPlugin.Init();
+
   // Various pins operation mode handling
   pinInit();
   LOG_INFO("Pin init");
@@ -51,8 +53,6 @@ void setup(void)
   dbgInit();
   LOG_INFO("DBG init");
 #endif
-
-  mcuPlugin.Init();
 
   // Initialise comms library for talking to the ESP mcu
   espCommsInit();
