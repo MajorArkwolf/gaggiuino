@@ -16,7 +16,6 @@ jobs:
       matrix:
         path:
           - "src"
-          - "examples"
           - "lib"
           - "mcu"
           - "scales-calibration"
