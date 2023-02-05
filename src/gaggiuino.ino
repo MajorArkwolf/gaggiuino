@@ -3,6 +3,10 @@
 #endif
 #include "gaggiuino.h"
 
+#include "../mcu/mcu_plugin.h"
+
+Gagguino::MCUPlugin mcuPlugin = {};
+
 SimpleKalmanFilter smoothPressure(0.2f, 0.2f, 0.06f);
 SimpleKalmanFilter smoothPumpFlow(0.1f, 0.1f, 0.20f);
 SimpleKalmanFilter smoothScalesFlow(1.f, 1.f, 0.05f);
@@ -48,6 +52,8 @@ void setup(void)
   LOG_INFO("DBG init");
 #endif
 
+  mcuPlugin.Init();
+
   // Initialise comms library for talking to the ESP mcu
   espCommsInit();
 
@@ -86,6 +92,7 @@ void setup(void)
 //Main loop where all the logic is continuously run
 void loop(void)
 {
+  mcuPlugin.Tick();
   pageValuesRefresh(false);
   lcdListen();
   sensorsRead();

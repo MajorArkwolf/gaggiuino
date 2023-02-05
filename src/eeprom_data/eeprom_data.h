@@ -78,7 +78,7 @@ struct eepromValues_t
 };
 
 void eepromInit();
-bool eepromWrite(eepromValues_t eepromValuesNew);
-struct eepromValues_t eepromGetCurrentValues();
+bool eepromWrite(const eepromValues_t &eepromValuesNew);
+eepromValues_t eepromGetCurrentValues();
 
 #endif

@@ -1,5 +1,6 @@
 #ifdef ESP_CORE
 #include <EEPROM.h>
+bool IS_EEPROM_LOADED = false;
 #else
 #define STM32F4 // This define has to be here otherwise the include of FlashStorage_STM32.h bellow fails.
 #include <FlashStorage_STM32.h>
@@ -15,7 +16,7 @@ namespace
 
     static struct eepromMetadata_t eepromMetadata;
 
-    eepromValues_t getEepromDefaults(void)
+    eepromValues_t getEepromDefaults()
     {
         eepromValues_t defaultData;
 
@@ -76,8 +77,15 @@ namespace
 
 }
 
-bool eepromWrite(eepromValues_t eepromValuesNew)
+bool eepromWrite(const eepromValues_t &eepromValuesNew)
 {
+#ifdef ESP_CORE
+    if (!IS_EEPROM_LOADED)
+    {
+        LOG_ERROR("EEPROM did not begin successfully, no save can occur");
+        return false;
+    }
+#endif
     /*
     No need to do these check since it checks UNSIGNED integers
 
@@ -217,10 +225,27 @@ bool eepromWrite(eepromValues_t eepromValuesNew)
     return true;
 }
 
-void eepromInit(void)
+void eepromInit()
 {
     // initialiaze defaults on memory
     eepromMetadata.values = getEepromDefaults();
+
+#ifdef ESP_CORE
+    constexpr auto sizeOfEEPROM = sizeof(eepromMetadata_t);
+    for (auto i = 0; i <= 5; ++i)
+    {
+        if (EEPROM.begin(sizeOfEEPROM))
+        {
+            IS_EEPROM_LOADED = true;
+            break;
+        }
+        delay(1000);
+        if (i == 5)
+        {
+            LOG_ERROR("Failed to init eeprom, saving functionality will be disabled");
+        }
+    }
+#endif
 
     // read version
     uint16_t version;
@@ -232,25 +257,28 @@ void eepromInit(void)
     if (version < EEPROM_DATA_VERSION && legacyEepromDataLoaders[version] != NULL)
     {
         readSuccess = (*legacyEepromDataLoaders[version])(eepromMetadata.values);
+        LOG_DEBUG("Loadeded from legacy eeprom");
     }
     else
     {
         readSuccess = loadCurrentEepromData(eepromMetadata.values);
+        LOG_DEBUG("Loadeded from eeprom");
     }
 
     if (!readSuccess)
     {
         LOG_ERROR("SECU_CHECK FAILED! Applying defaults! eepromMetadata.version=%d", version);
         eepromMetadata.values = getEepromDefaults();
+        eepromWrite(eepromMetadata.values);
     }
-
-    if (!readSuccess || version != EEPROM_DATA_VERSION)
+    else if (version != EEPROM_DATA_VERSION)
     {
+        LOG_DEBUG("Eeprom did not load successfully, writing new values");
         eepromWrite(eepromMetadata.values);
     }
 }
 
-struct eepromValues_t eepromGetCurrentValues(void)
+eepromValues_t eepromGetCurrentValues()
 {
     return eepromMetadata.values;
 }

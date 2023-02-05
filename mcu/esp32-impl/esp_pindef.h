@@ -23,6 +23,7 @@
 // Unknown
 #define waterPin GPIO_NUM_43
 
+// Scales
 #define HX711_sck_1 GPIO_NUM_44
 #define HX711_sck_2 GPIO_NUM_48
 #define HX711_dout_1 GPIO_NUM_47
