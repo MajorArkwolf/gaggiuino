@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <IWatchdog.h>
 #include "lcd/lcd.h"
+#include "log.h"
 
 void iwdcInit(void)
 {

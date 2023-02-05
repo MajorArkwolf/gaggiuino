@@ -2,7 +2,7 @@
 #define EEPROM_DATA_V5_H
 
 #include "../eeprom_data.h"
-#include "../eeprom_metadata.h"
+#include "../mcu/stm32-impl/eeprom_metadata.h"
 
 /**
 * Version 5:
