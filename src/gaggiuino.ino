@@ -338,14 +338,7 @@ static void lcdRefresh(void)
     }
     else if (static_cast<SCREEN_MODES>(lcdCurrentPageId) == SCREEN_MODES::SCREEN_brew_graph || static_cast<SCREEN_MODES>(lcdCurrentPageId) == SCREEN_MODES::SCREEN_brew_manual)
     {
-      if (scalesIsPresent())
-      {
-        lcdSetWeight(currentState.weight);
-      }
-      else if (currentState.shotWeight)
-      {
-        lcdSetWeight(currentState.shotWeight);
-      }
+      lcdSetWeight(currentState.shotWeight);
     }
 
     /*LCD flow output*/
@@ -749,13 +742,15 @@ void systemHealthCheck(float pressureThreshold)
     {
       //Reloading the watchdog timer, if this function fails to run MCU is rebooted
       watchdogReload();
-      switch (lcdCurrentPageId)
+      switch (static_cast<SCREEN_MODES>(lcdCurrentPageId))
       {
-      case 2:
-      case 8:
+      case SCREEN_MODES::SCREEN_brew_manual:
+      case SCREEN_MODES::SCREEN_brew_graph:
+        brewDetect();
+        lcdRefresh();
+        lcdListen();
         sensorsRead();
-        setPumpOff();
-        setBoilerOff();
+        justDoCoffee(runningCfg, currentState, brewActive, preinfusionFinished);
         break;
       default:
         sensorsRead();
@@ -766,6 +761,8 @@ void systemHealthCheck(float pressureThreshold)
         break;
       }
     }
+    lcdRefresh();
+    lcdListen();
     sensorsRead();
     closeValve();
     systemHealthTimer = millis() + HEALTHCHECK_EVERY;
@@ -804,8 +801,8 @@ bool isBoilerFull(unsigned long elapsedTime)
   bool boilerFull = false;
   if (elapsedTime > BOILER_FILL_START_TIME + 1000UL)
   {
-    boilerFull = (previousSmoothedPressure - currentState.smoothedPressure > -0.05f) &&
-                 (previousSmoothedPressure - currentState.smoothedPressure < 0.05f);
+    boilerFull = (previousSmoothedPressure - currentState.smoothedPressure > -0.02f) &&
+                 (previousSmoothedPressure - currentState.smoothedPressure < 0.001f);
   }
 
   return elapsedTime >= BOILER_FILL_TIMEOUT || boilerFull;
