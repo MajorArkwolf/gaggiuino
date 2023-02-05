@@ -2,7 +2,6 @@
 #define EEPROM_DATA_H
 
 #include <Arduino.h>
-#include "log.h"
 
 /**
 * current data version definition below
