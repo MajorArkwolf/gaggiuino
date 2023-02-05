@@ -21,19 +21,19 @@
 #define valvePin GPIO_NUM_5
 
 // Unknown
-#define waterPin GPIO_NUM_43
+#define waterPin GPIO_NUM_43  // NOT BOUND YET
 
 // Scales
-#define HX711_sck_1 GPIO_NUM_44
-#define HX711_sck_2 GPIO_NUM_48
-#define HX711_dout_1 GPIO_NUM_47
-#define HX711_dout_2 GPIO_NUM_46
+#define HX711_sck_1 GPIO_NUM_44   // NOT BOUND YET
+#define HX711_sck_2 GPIO_NUM_48   // NOT BOUND YET
+#define HX711_dout_1 GPIO_NUM_47  // NOT BOUND YET
+#define HX711_dout_2 GPIO_NUM_46  // NOT BOUND YET
 
-#define USART_LCD Serial1  // 39(TX) & 38(RX)
-#define USART_ESP Serial2  // PA9(TX) & PA10(RX)
-#define USART_DEBUG Serial // USB-CDC (Takes PA8,PA9,PA10,PA11)
+#define USART_LCD Serial1   // 39(TX) & 38(RX)
+#define USART_ESP Serial2   // NOT BOUND YET
+#define USART_DEBUG Serial  // NOT BOUND YET
 
-#define hw_SCL 15
-#define hw_SDA 16
+#define hw_SCL 15  // NOT BOUND YET
+#define hw_SDA 16  // NOT BOUND YET
 
 #endif
