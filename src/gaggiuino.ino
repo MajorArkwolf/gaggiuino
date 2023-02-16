@@ -8,7 +8,7 @@
 Gagguino::MCUPlugin mcuPlugin = {};
 
 SimpleKalmanFilter smoothPressure(0.2f, 0.2f, 0.06f);
-SimpleKalmanFilter smoothPumpFlow(0.1f, 0.1f, 0.20f);
+SimpleKalmanFilter smoothPumpFlow(0.1f, 0.1f, 0.09f);
 SimpleKalmanFilter smoothScalesFlow(1.f, 1.f, 0.05f);
 
 //default phases. Updated in updateProfilerPhases.
@@ -98,7 +98,7 @@ void loop(void) {
   brewDetect();
   modeSelect();
   lcdRefresh();
-  espCommsSendSensorData(currentState, brewActive, steamState());
+  espCommsSendSensorData(currentState);
   systemHealthCheck(0.7f);
 }
 
@@ -107,6 +107,7 @@ void loop(void) {
 //##############################################################################################################################
 
 static void sensorsRead(void) {
+  sensorReadSwitches();
   espCommsReadData();
   sensorsReadTemperature();
   sensorsReadWeight();
@@ -114,6 +115,16 @@ static void sensorsRead(void) {
   calculateWeightAndFlow();
   fillBoiler();
   updateStartupTimer();
+}
+
+static void sensorReadSwitches(void) {
+  currentState.brewSwitchState = brewState();
+  currentState.steamSwitchState = steamState();
+  currentState.hotWaterSwitchState =
+      waterPinState() ||
+      (currentState.brewSwitchState &&
+       currentState
+           .steamSwitchState);  // use either an actual switch, or the GC/GCP switch combo
 }
 
 static void sensorsReadTemperature(void) {
@@ -150,9 +161,9 @@ static void sensorsReadPressure(void) {
     currentState.isPressureRisingFast =
         currentState.smoothedPressure >= previousSmoothedPressure + 1.55f;
     currentState.isPressureFalling =
-        currentState.smoothedPressure <= previousSmoothedPressure - 0.05f;
+        currentState.smoothedPressure <= previousSmoothedPressure - 0.005f;
     currentState.isPressureFallingFast =
-        currentState.smoothedPressure <= previousSmoothedPressure - 0.1f;
+        currentState.smoothedPressure <= previousSmoothedPressure - 0.5f;
     pressureTimer = millis() + GET_PRESSURE_READ_EVERY;
   }
 }
@@ -224,8 +235,8 @@ static void pageValuesRefresh(
     runningCfg = lcdDownloadCfg();
 
     homeScreenScalesEnabled = lcdGetHomeScreenScalesEnabled();
-    selectedOperationalMode = (OPERATION_MODES)
-        lcdGetSelectedOperationalMode();  // MODE_SELECT should always be LAST
+    // MODE_SELECT should always be LAST
+    selectedOperationalMode = (OPERATION_MODES)lcdGetSelectedOperationalMode();
 
     updateProfilerPhases();
 
@@ -251,9 +262,9 @@ static void modeSelect(void) {
     case OPERATION_MODES::OPMODE_everythingFlowProfiled:
     case OPERATION_MODES::OPMODE_pressureBasedPreinfusionAndFlowProfile:
       nonBrewModeActive = false;
-      if (waterState())
+      if (currentState.hotWaterSwitchState)
         hotWaterMode(currentState);
-      else if (steamState())
+      else if (currentState.steamSwitchState)
         steamCtrl(runningCfg, currentState, brewActive);
       else {
         profiling();
@@ -262,22 +273,22 @@ static void modeSelect(void) {
       break;
     case OPERATION_MODES::OPMODE_manual:
       nonBrewModeActive = false;
-      if (!steamState())
+      if (!currentState.steamSwitchState)
         steamTime = millis();
       manualFlowControl();
       break;
     case OPERATION_MODES::OPMODE_flush:
       nonBrewModeActive = true;
-      if (!steamState())
+      if (!currentState.steamSwitchState)
         steamTime = millis();
       backFlush(currentState);
-      brewActive ? setBoilerOff()
-                 : justDoCoffee(runningCfg, currentState, brewActive,
-                                preinfusionFinished);
+      brewActive
+          ? setBoilerOff()
+          : justDoCoffee(runningCfg, currentState, false, preinfusionFinished);
       break;
     case OPERATION_MODES::OPMODE_steam:
       nonBrewModeActive = true;
-      if (!steamState()) {
+      if (!currentState.steamSwitchState) {
         brewActive ? flushActivated() : flushDeactivated();
         justDoCoffee(runningCfg, currentState, brewActive, preinfusionFinished);
         steamTime = millis();
@@ -287,7 +298,7 @@ static void modeSelect(void) {
       break;
     case OPERATION_MODES::OPMODE_descale:
       nonBrewModeActive = true;
-      if (!steamState())
+      if (!currentState.steamSwitchState)
         steamTime = millis();
       deScale(runningCfg, currentState);
       break;
@@ -326,7 +337,8 @@ static void lcdRefresh(void) {
                    SCREEN_MODES::SCREEN_brew_graph ||
                static_cast<SCREEN_MODES>(lcdCurrentPageId) ==
                    SCREEN_MODES::SCREEN_brew_manual) {
-      lcdSetWeight(currentState.shotWeight);
+      if (currentState.shotWeight)
+        lcdSetWeight(currentState.shotWeight);
     }
 
     /*LCD flow output*/
@@ -342,7 +354,7 @@ static void lcdRefresh(void) {
               : currentState.smoothedPumpFlow * 10.f);
     }
 
-#if defined DEBUG_ENABLED && defined stm32f411xx
+#ifdef DEBUG_ENABLED
     lcdShowDebug(readTempSensor(), getAdsError());
 #endif
 
@@ -633,7 +645,7 @@ static void manualFlowControl(void) {
 static void brewDetect(void) {
   static bool paramsReset = true;
 
-  if (brewState()) {
+  if (currentState.brewSwitchState) {
     if (!paramsReset) {
       brewParamsReset();
       paramsReset = true;
@@ -684,8 +696,9 @@ void systemHealthCheck(float pressureThreshold) {
     if (millis() > thermoTimer) {
       LOG_ERROR("Cannot read temp from thermocouple (last read: %.1lf)!",
                 static_cast<double>(currentState.temperature));
-      steamState() ? lcdShowPopup("COOLDOWN")
-                   : lcdShowPopup("TEMP READ ERROR");  // writing a LCD message
+      currentState.steamSwitchState
+          ? lcdShowPopup("COOLDOWN")
+          : lcdShowPopup("TEMP READ ERROR");  // writing a LCD message
       currentState.temperature =
           thermocouple.readCelsius() -
           runningCfg.offsetTemp;  // Making sure we're getting a value
@@ -700,14 +713,14 @@ void systemHealthCheck(float pressureThreshold) {
     lcdShowPopup("TURN STEAM OFF NOW!");
     setPumpOff();
     setBoilerOff();
-    currentState.isSteamForgottenON = steamState();
+    currentState.isSteamForgottenON = currentState.steamSwitchState;
   }
 
 //Releasing the excess pressure after steaming or brewing if necessary
 #if defined LEGO_VALVE_RELAY || defined SINGLE_BOARD
 
   // No point going through the whole thing if this first condition isn't met.
-  if (waterState())
+  if (currentState.hotWaterSwitchState)
     return;
 
   // Should enter the block every "systemHealthTimer" seconds
@@ -746,7 +759,13 @@ void systemHealthCheck(float pressureThreshold) {
 
 void fillBoiler() {
 #if defined LEGO_VALVE_RELAY || defined SINGLE_BOARD
+
   if (startupInitFinished) {
+    return;
+  }
+
+  if (currentState.temperature > BOILER_FILL_SKIP_TEMP) {
+    startupInitFinished = true;
     return;
   }
 
@@ -785,8 +804,9 @@ unsigned long getTimeSinceInit() {
 
 // Checks if Brew switch is ON
 bool isSwitchOn() {
-  return brewState() && static_cast<SCREEN_MODES>(lcdCurrentPageId) ==
-                            SCREEN_MODES::SCREEN_home;
+  return currentState.brewSwitchState &&
+         static_cast<SCREEN_MODES>(lcdCurrentPageId) ==
+             SCREEN_MODES::SCREEN_home;
 }
 
 void fillBoilerUntilThreshod(unsigned long elapsedTime) {
