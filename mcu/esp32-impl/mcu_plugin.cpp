@@ -40,7 +40,9 @@ bool MCUPlugin::Init() {
   WiFi.begin(ssid, password);
 
   // Wait for connection
+  LOG_DEBUG("Attempting to connect.");
   while (WiFi.status() != WL_CONNECTED) {
+    LOG_DEBUG(".");
     delay(500);
   }
 
