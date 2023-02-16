@@ -33,15 +33,14 @@ volatile uint32_t sensorDataTimer = 0;
 void espCommsSendSensorData(const SensorState& state, uint32_t frequency) {
   uint32_t now = millis();
   if (now - sensorDataTimer > frequency) {
-    SensorStateSnapshot sensorSnapshot = SensorStateSnapshot{
-        .brewActive = state.brewSwitchState,
-        .steamActive = state.steamSwitchState,
-        .temperature = state.temperature,
-        .pressure = state.smoothedPressure,
-        .pumpFlow = state.smoothedPumpFlow,
-        .weightFlow = state.weightFlow,
-        .weight = state.weight,
-    };
+    SensorStateSnapshot sensorSnapshot = SensorStateSnapshot{};
+    sensorSnapshot.brewActive = state.brewSwitchState;
+    sensorSnapshot.steamActive = state.steamSwitchState;
+    sensorSnapshot.temperature = state.temperature;
+    sensorSnapshot.pressure = state.smoothedPressure;
+    sensorSnapshot.pumpFlow = state.smoothedPumpFlow;
+    sensorSnapshot.weightFlow = state.weightFlow;
+    sensorSnapshot.weight = state.weight;
     McuCommsSingleton::getInstance().sendSensorStateSnapshot(sensorSnapshot);
     sensorDataTimer = now;
   }
